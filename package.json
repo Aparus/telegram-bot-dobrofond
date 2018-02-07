@@ -1,0 +1,17 @@
+{
+  "name": "telegram-bot-dobrofond",
+  "version": "1.0.0",
+  "description": "recieves applications from users",
+  "main": "telegramBot.js",
+  "dependencies": {
+    "node-telegram-bot-api": "^0.30.0",
+    "pg": "^7.4.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1", 
+    "start": "node telegramBot"
+  },
+  "author": "",
+  "license": "ISC"
+}

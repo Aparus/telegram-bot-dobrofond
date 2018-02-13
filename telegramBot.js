@@ -2,9 +2,9 @@ const TelegramBot = require("node-telegram-bot-api");
 const config = require("./config");
 const ActiveDialogs = require("./activeDialogs");
 const { Client } = require("pg");
+const fs = require("fs");
 
-const TOKEN = config.token;
-var bot = new TelegramBot(TOKEN, { polling: true });
+var bot = new TelegramBot(config.token, { polling: true });
 
 //dialogs : [ {userId, date, state, messages} ] stores state of active dialogs with users
 let dialogs = new ActiveDialogs();
@@ -54,8 +54,7 @@ bot.on("message", msg => {
     }
     if (dialog.state == dialogs.scenario.length) {
       //мы достигли конца сценария, получили все данные, сохраняем их в базу данных и удаляем активный диалог
-      const situation = dialogs.convertDialogToSituation(dialog);
-      saveToDB(situation);
+      const situation = convertDialogToSituation(dialog);
     }
   }
 });
@@ -63,6 +62,43 @@ bot.on("message", msg => {
 bot.on("polling_error", error => {
   console.log("polling_error", error); // => 'EFATAL'
 });
+
+// Dialog contains separated messages, we should extract valuable for us data to one "situation" object
+// Situation is a row of DB, where we structure and save data from dialog.
+// Dialog will be deleted, Situation will be saved to DataBase
+
+function convertDialogToSituation(dialog) {
+  const { userId, date, messages } = dialog;
+  const situation = { userId, date };
+  const downloads = []; // promises to files we should download and save to server
+  messages.forEach((msg, index) => {
+    //console.log(msg.text, index);
+    const field = dialogs.scenario[index].field;
+    situation[field] = {};
+
+    if (msg.text) {
+      situation[field].text = msg.text;
+    } else {
+      if (msg.photo) {
+        situation[field].id = msg.photo[msg.photo.length - 1].file_id;
+      }
+      if (msg.voice) {
+        situation[field].id = msg.voice.file_id;
+      }
+      let filePromise = downloadAndRenameFile(situation[field].id);
+      filePromise.then(filePath => {
+        situation[field].filePath = filePath;
+      });
+      downloads.push(filePromise);
+    }
+  });
+  console.log("downloads: ", downloads);
+  Promise.all(downloads).then(results => {
+    console.log("promiseAll", results);
+    saveToDB(situation);
+  });
+  return situation;
+}
 
 function saveToDB(situation) {
   const client = new Client({
@@ -86,4 +122,18 @@ function saveToDB(situation) {
   );
 }
 
-module.exports = bot;
+//downloads and renames file and returns promise
+function downloadAndRenameFile(fileId) {
+  let promiseFileDownload = bot.downloadFile(fileId, "files"); //promise
+  let promiseFileRename = filePath => {
+    return new Promise((resolve, reject) => {
+      let fileExtention = filePath.split(".")[1] || "ogg";
+      let newFilePath = `files/${fileId}.${fileExtention}`;
+      fs.rename(filePath, newFilePath, err => {
+        if (err) reject(err);
+        resolve(newFilePath);
+      });
+    });
+  }; // promise
+  return promiseFileDownload.then(promiseFileRename);
+}

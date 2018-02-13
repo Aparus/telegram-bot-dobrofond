@@ -44,33 +44,6 @@ class ActiveDialogs {
       return elem.userId != userId;
     });
   }
-
-  // Dialog contains separated messages, we should extract valuable for us data to one "situation" object
-  // Situation is a row of DB, where we structure and save data from dialog.
-  // Dialog will be deleted, Situation will be saved to DataBase
-
-  convertDialogToSituation(dialog) {
-    const { userId, date, messages } = dialog;
-    const situation = { userId, date };
-    const downloads = []; // links to files we should download and save to server
-    messages.forEach((msg, index) => {
-      //console.log(msg.text, index);
-      const field = this.scenario[index].field;
-      situation[field] = {};
-
-      if (msg.text) {
-        situation[field].text = msg.text;
-      } else if (msg.photo) {
-        //id of photo
-        situation[field].id = msg.photo[msg.photo.length - 1].file_id;
-        console.log("msg.photo", msg.photo);
-      } else if (msg.voice) {
-        situation[field].id = msg.voice.file_id;
-      }
-    });
-    console.log("situation: ", situation);
-    return situation;
-  }
 }
 
 module.exports = ActiveDialogs;

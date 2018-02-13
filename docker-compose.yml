@@ -1,0 +1,16 @@
+version: '3.1'
+
+services:
+  telegram-bot-dobrofond:
+    container_name: telegram-bot-dobrofond
+    build:
+       context: .
+       dockerfile: Dockerfile
+    command: "npm start -- --host=0.0.0.0"
+    ports:
+      - 4200:4200
+      - 49152:49152
+    volumes:
+      - .:/home/node/telegram-bot-dobrofond
+      - /home/node/telegram-bot-dobrofond/node_modules
+      - /mnt/xfsdata/gitlab/intelma/files:/home/node/telegram-bot-dobrofond/files

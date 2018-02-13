@@ -27,5 +27,5 @@ create table situations
 
 ALTER TABLE situations ALTER COLUMN id SET DEFAULT nextval('situations_id_seq'::regclass);
 
-ALTER TABLE situations
-  OWNER TO situations_admin;
+ALTER TABLE situations OWNER TO situations_admin;
+alter sequence situations_id_seq owner to situations_admin

@@ -13,6 +13,7 @@ COPY package.json $APP_DIR/package.json
 
 RUN npm install
 
+
 WORKDIR $APP_DIR
 
 EXPOSE 4200 49152

@@ -13,4 +13,5 @@ services:
     volumes:
       - .:/home/node/telegram-bot-dobrofond
       - /home/node/telegram-bot-dobrofond/node_modules
-      - /mnt/xfsdata/gitlab/intelma/files:/home/node/telegram-bot-dobrofond/files
+      - /telegram/files:/home/node/telegram-bot-dobrofond/files
+      

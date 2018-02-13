@@ -1,5 +1,5 @@
 {
     "token": "543841053:AAG4pAeKN5fuRf2IShLW8xFvK920-xj6_2Y", 
     "mongoUrl": "mongodb://localhost:27017/cityChallengeBot", 
-    "postgresUrl":"postgres://situations_admin:ekevbb123@localhost/situationsdb"
+    "postgresUrl":"postgres://situations_admin:ekevbb123@192.168.1.34/situationsdb"
 }

@@ -92,9 +92,11 @@ function convertDialogToSituation(dialog) {
       downloads.push(filePromise);
     }
   });
-  console.log("downloads: ", downloads);
+
+  // console.log("downloads: ", downloads);
   Promise.all(downloads).then(results => {
     console.log("promiseAll", results);
+    console.log("situation", situation);
     saveToDB(situation);
   });
   return situation;
@@ -107,8 +109,16 @@ function saveToDB(situation) {
   client.connect();
 
   client.query(
-    "INSERT INTO situations(fio, phone, text_description, timestamp) VALUES($1, $2, $3, $4)",
-    [situation.name, situation.phone, situation.description, situation.date],
+    "INSERT INTO situations(user_id, fio, phone, text, voice, photo, timestamp) VALUES($1, $2, $3, $4, $5, $6, $7)",
+    [
+      situation.userId,
+      situation.name.text,
+      situation.phone.text,
+      situation.description.text,
+      situation.description.filePath,
+      situation.photo.filePath,
+      situation.date
+    ],
     (err, result) => {
       if (err) {
         return console.error("Ошибка при записи в PostgresQL", err);
@@ -128,8 +138,8 @@ function downloadAndRenameFile(fileId) {
   let promiseFileRename = filePath => {
     return new Promise((resolve, reject) => {
       let fileExtention = filePath.split(".")[1] || "ogg";
-      let newFilePath = `files/${fileId}.${fileExtention}`;
-      fs.rename(filePath, newFilePath, err => {
+      let newFilePath = `${fileId}.${fileExtention}`;
+      fs.rename(filePath, `files/${newFilePath}`, err => {
         if (err) reject(err);
         resolve(newFilePath);
       });

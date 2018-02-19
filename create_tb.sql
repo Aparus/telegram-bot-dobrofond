@@ -16,12 +16,13 @@ create table situations
 	id serial not null
 		constraint situations_pkey
 			primary key,
-	fio char(255),
-	text_description text,
-	phone char(50),
-	timestamp char(20),
-	voice_id char(100),
-	photo_id char(100)
+  fio character(255),
+  "text" text,
+  phone character(50),
+  "timestamp" character(20),
+  voice character(100),
+  photo character(100),
+  user_id character(30)
 )
 ;
 

@@ -5,7 +5,8 @@
   "main": "telegramBot.js",
   "dependencies": {
     "node-telegram-bot-api": "^0.30.0",
-    "pg": "^7.4.1"
+    "pg": "^7.4.1",
+    "socks5-https-client": "^1.2.1"
   },
   "devDependencies": {},
   "scripts": {

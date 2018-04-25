@@ -1,17 +1,39 @@
 const TelegramBot = require("node-telegram-bot-api");
+const Agent = require("socks5-https-client/lib/Agent");
 const config = require("./config");
 const ActiveDialogs = require("./activeDialogs");
 const { Client } = require("pg");
 const fs = require("fs");
+var request = require("request");
+const auth1C =
+  "Basic " +
+  new Buffer(config.api1C_login + ":" + config.api1C_password).toString(
+    "base64"
+  );
 
-var bot = new TelegramBot(config.token, { polling: true });
-
+var bot = new TelegramBot(config.token, {
+  polling: true,
+  request: {
+    agentClass: Agent,
+    agentOptions: {
+      socksHost: "tp.grishka.me",
+      socksPort: "1080",
+      // If authorization is needed:
+      socksUsername: "tgproxy",
+      socksPassword: "fuckrkn"
+    }
+  }
+});
+//https://195.201.137.246:1080
 //dialogs : [ {userId, date, state, messages} ] stores state of active dialogs with users
 let dialogs = new ActiveDialogs();
 
 bot.onText(/\/start/, (msg, [source, match]) => {
-  const { chat: { id, first_name, last_name }, text } = msg;
-  const welcomeMessage = `Здравствуйте, ${first_name}! В этом боте вы можете сообщить о проблеме, с которой вы столкнулись в нашем городе.`;
+  const {
+    chat: { id, first_name, last_name },
+    text
+  } = msg;
+  const welcomeMessage = `Здравствуйте, ${first_name}! В этом боте вы можете сообщить о проблеме.`;
   const inline_keyboard = [
     [
       {
@@ -69,25 +91,29 @@ bot.on("polling_error", error => {
 
 function convertDialogToSituation(dialog) {
   const { userId, date, messages } = dialog;
-  const situation = { userId, date };
+  const situation = { userId, date, files: [] };
   const downloads = []; // promises to files we should download and save to server
+  console.log("sit before", situation);
   messages.forEach((msg, index) => {
     //console.log(msg.text, index);
     const field = dialogs.scenario[index].field;
-    situation[field] = {};
 
+    //если сообщение текстовое - один алгоритм
     if (msg.text) {
-      situation[field].text = msg.text;
+      situation[field] = msg.text;
+      //если сообщение файловое - другой алгоритм
     } else {
+      let fileId = "";
       if (msg.photo) {
-        situation[field].id = msg.photo[msg.photo.length - 1].file_id;
+        fileId = msg.photo[msg.photo.length - 1].file_id;
       }
       if (msg.voice) {
-        situation[field].id = msg.voice.file_id;
+        fileId = msg.voice.file_id;
       }
-      let filePromise = downloadAndRenameFile(situation[field].id);
-      filePromise.then(filePath => {
-        situation[field].filePath = filePath;
+      let filePromise = downloadAndRenameFile(fileId);
+      filePromise.then(fileName => {
+        let data = fs.readFileSync(`files/${fileName}`, { encoding: "base64" });
+        situation.files.push({ name: fileName, data });
       });
       downloads.push(filePromise);
     }
@@ -97,7 +123,30 @@ function convertDialogToSituation(dialog) {
   Promise.all(downloads).then(results => {
     console.log("promiseAll", results);
     console.log("situation", situation);
-    saveToDB(situation);
+    fs.writeFileSync("tmp/situation.txt", JSON.stringify(situation));
+    //saveToDB(situation);
+    //write data to 1C
+    console.log("config.api1C_host", config.api1C_host);
+    request(
+      {
+        method: "POST",
+        url: config.api1C_host,
+        headers: {
+          Authorization: auth1C
+        },
+        body: JSON.stringify(situation)
+      },
+      function(error, response, body) {
+        console.log("response from 1C", error, response, body);
+        const nikolayId = "121042827";
+        const rustamId = "131455605";
+        bot.sendMessage(
+          nikolayId,
+          "responce from 1C:\n" + JSON.stringify(response, null, 2)
+        );
+      }
+    );
+    dialogs.deleteDialog(situation.userId);
   });
   return situation;
 }
@@ -134,7 +183,8 @@ function saveToDB(situation) {
 
 //downloads and renames file and returns promise
 function downloadAndRenameFile(fileId) {
-  let promiseFileDownload = bot.downloadFile(fileId, "files"); //promise
+  let promiseFileDownload = bot.downloadFile(fileId, "files");
+  //promise
   let promiseFileRename = filePath => {
     return new Promise((resolve, reject) => {
       let fileExtention = filePath.split(".")[1] || "ogg";
@@ -144,6 +194,22 @@ function downloadAndRenameFile(fileId) {
         resolve(newFilePath);
       });
     });
-  }; // promise
+  };
+  // promise
   return promiseFileDownload.then(promiseFileRename);
 }
+
+/* 
+const sitExample = {
+  userId: "123456",
+  name: "Рустам",
+  tel: "79111124522",
+  text: "Текст Заявки",
+  files: [
+    {
+      name: "ИмяФайла1.pdf",
+      data: "/9j/4AAQSkZJRgABAQEBLAEsAAD/2wB"
+    }
+  ]
+};
+ */

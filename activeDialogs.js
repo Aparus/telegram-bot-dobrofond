@@ -9,12 +9,15 @@ class ActiveDialogs {
     this.dialogs = [];
     this.scenario = [
       { field: "name", question: "Ваше имя" },
-      { field: "phone", question: "Телефон для связи" },
+      { field: "tel", question: "Телефон для связи" },
       {
-        field: "description",
+        field: "text",
         question: "Опишите ситуацию текстом или голосом"
       },
-      { field: "photo", question: "Добавьте фотографию" }
+      {
+        field: "files",
+        question: "Если нужно, добавьте фотографии и нужные файлы (пока 1)"
+      }
     ];
   }
 

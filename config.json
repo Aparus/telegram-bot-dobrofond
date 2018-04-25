@@ -1,5 +1,8 @@
 {
     "token": "543841053:AAG4pAeKN5fuRf2IShLW8xFvK920-xj6_2Y", 
     "mongoUrl": "mongodb://localhost:27017/cityChallengeBot", 
-    "postgresUrl":"postgres://situations_admin:ekevbb123@localhost/situationsdb"
+    "postgresUrl":"postgres://situations_admin:ekevbb123@localhost/situationsdb", 
+    "api1C_host": "http://185.17.132.71/region05/hs/dataExchange",
+    "api1C_login":"mobile_2", 
+    "api1C_password":"mobile_2" 
 }
